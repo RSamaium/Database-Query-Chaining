@@ -1,86 +1,77 @@
-h1. Database Query Chaining Beta 1.0
+	<h1>Database Query Chaining Beta 1.0</h1>
 
-https://github.com/RSamaium/Database-Query-Chaining
+	<p>https://github.com/RSamaium/Database-Query-Chaining</p>
 
-Required :
-- PHP 5
-- PDO mod (http://www.php.net/manual/en/book.pdo.php)
+	<p>Required : &#8211; PHP 5 &#8211; PDO mod (http://www.php.net/manual/en/book.pdo.php)</p>
 
-Use the PHP class to make database queries and data manipulation. 
+	<p>Use the PHP class to make database queries and data manipulation. </p>
 
-Example :
+	<p>Example :</p>
 
-$db = new DB("my_username", "my_password", "db_name");
-$data = $db	->select("my_table")
-			->where(array(
-				"id"	=> 	 1
-			))
-			->fetch();
-// => SELECT * FROM my_table WHERE id = "1"
-print_r($data);
+	<p>$db = new DB(&#8220;my_username&#8221;, &#8220;my_password&#8221;, &#8220;db_name&#8221;);<br />
+$data = $db->select(&#8220;my_table&#8221;)<br />
+->where(array(<br />
+&#8220;id&#8221;=>  1<br />
+))<br />
+->fetch();<br />
+// => SELECT * FROM my_table WHERE id = &#8220;1&#8221;<br />
+print_r($data);<br />
+&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;<br />
+$db->select(&#8220;table&#8221;)<br />
+->where(array(<br />
+&#8220;id&#8221; =>1<br />
+))<br />
+->where(array(<br />
+&#8220;old&#8221;=>&#8221;<50&#8221;<br />
+))<br />
+->fetch();<br />
+// => SELECT * FROM table WHERE id = &#8220;1&#8221; AND old < &#8220;50&#8221;<br />
+&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;<br />
+$db->select(&#8220;table&#8221;)<br />
+->orderBy(&#8220;time&#8221;, &#8220;DESC&#8221;)<br />
+->orderBy(&#8220;age&#8221;)<br />
+->fetchAll();<br />
+// => SELECT * FROM table ORDER BY time DESC, age<br />
+&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;<br />
+$db->select(&#8220;table&#8221;)<br />
+->where(array(<br />
+&#8220;text&#8221; =>&#8220;3 > 2&#8221;<br />
+), array(<br />
+&#8220;secure&#8221; => true<br />
+))<br />
+->where(array(<br />
+&#8220;age&#8221;=>&#8220;18&#8221;<br />
+), array(<br />
+&#8220;operator&#8221; => &#8220;OR&#8221;<br />
+))<br />
+->fetch();</p>
 
---------------------------------------
+	<p>// => SELECT * FROM table WHERE text = &#8220;3 > 2&#8221; OR age = &#8220;18&#8221;<br />
+&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;<br />
+$db->insert(&#8220;table&#8221;)<br />
+->values(array(<br />
+&#8220;text&#8221;=>&#8220;foo&#8221;<br />
+))<br />
+->exec();<br />
+// => INSERT INTO table (&#8216;text&#8217;) VALUES (&#8216;foo&#8217;)<br />
+&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;<br />
+No matter the order ! :</p>
 
-$db	->select("table")
-	->where(array(
-		"id" 	=>	1
-	))
-	->where(array(
-		"old"	=>	"<50"
-	))
-	->fetch();
-// => SELECT * FROM table WHERE id = "1" AND old < "50"
+	<p>$db->select(&#8220;table&#8221;, &#8220;<acronym title="price">SUM</acronym>&#8221;)<br />
+->orderBy(&#8220;time&#8221;)<br />
+->having(array(<br />
+&#8220;<acronym title="price">SUM</acronym>&#8221; => &#8221;<1500&#8221;<br />
+))<br />
+->where(array(<br />
+&#8220;color&#8221; =>&#8220;blue&#8221;<br />
+))<br />
+->limit(10)<br />
+->where(array(<br />
+&#8220;age&#8221;=>&#8221;>=18&#8221;<br />
+))<br />
+->groupBy(&#8220;column&#8221;)<br />
+->fetchAll();<br />
+// => SELECT <acronym title="price">SUM</acronym> FROM table WHERE color = &#8220;blue&#8221; AND age >= &#8220;18&#8221; GROUP BY column HAVING <acronym title="price">SUM</acronym> < &#8220;1500&#8221; ORDER BY time LIMIT 10</p>
 
---------------------------------------
 
-$db	->select("table")
-	->orderBy("time", "DESC")
-	->orderBy("age")
-	->fetchAll();
-// => SELECT * FROM table ORDER BY time DESC, age
-	
---------------------------------------
-	
-$db	->select("table")
-	->where(array(
-		"text" 	=>	"3 > 2"
-	), array(
-		"secure" 	=> true
-	))
-	->where(array(
-		"age"		=>	"18"
-	), array(
-		"operator" 	=> "OR"
-	))
-	->fetch();
-	
-// => SELECT * FROM table WHERE text = "3 &gt; 2" OR age = "18"
-
---------------------------------------
-
-$db	->insert("table")
-	->values(array(
-		"text"		=>	"foo"
-	))
-	->exec();
-// => INSERT INTO table ('text') VALUES ('foo')
-
---------------------------------------
-
-No matter the order ! :
-
-$db	->select("table", "SUM(price)")
-	->orderBy("time")
-	->having(array(
-		"SUM(price)" 	=> "<1500"
-	))
-	->where(array(
-		"color" 		=>	"blue"
-	))
-	->limit(10)
-	->where(array(
-		"age"			=>	">=18"
-	))
-	->groupBy("column")
-	->fetchAll();
-// => SELECT SUM(price) FROM table WHERE color = "blue" AND age >= "18" GROUP BY column HAVING SUM(price) < "1500" ORDER BY time LIMIT 10
+ 
