@@ -1,4 +1,4 @@
-Database Query Chaining Beta 1.0
+h1. Database Query Chaining Beta 1.0
 
 https://github.com/RSamaium/Database-Query-Chaining
 
