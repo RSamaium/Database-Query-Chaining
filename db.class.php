@@ -122,7 +122,7 @@ class DB extends PDO {
 	 * Starts a query to delete data in database.
 	 * @method delete
 	 * @param {String} table Table name
-	 * @return {DB_Update}
+	 * @return {DB_Delete}
 	*/	
 	public function delete($table) {
 		return new DB_Statement($this, $table, 'DELETE');
@@ -178,7 +178,9 @@ class DB_Exec {
 	*/	
 	public function exec() {
 		$this->sqlConstruct();
-		return $this->db->query($this->sql);
+		$b = $this->db->exec($this->sql);
+		$ret = $this->db->errorInfo();
+		return $ret[0] === "00000";
 	}
 	
 	/**
@@ -654,7 +656,7 @@ class DB_Element extends DB_Exec {
 	 * @param {String} secure (optional)
 	 * @return {DB_Element}
 	*/	
-	public function set($params, $secure = null) {
+	public function set($params, $secure = false) {
 		$str = $this->strConstruct($params, $secure, ',');
 		$this->addElement('SET', $str);
 		return $this->element();
@@ -726,12 +728,17 @@ class DB_Element extends DB_Exec {
 	private function strConstruct($params, $secure = false, $separator = "AND") {
 		$str = '';
 		$operation = '=';
+		$quot = "'";
 		foreach ($params as $key => $value) {
-			if (preg_match('#^(!=|<|>|>=|<=|<>|!<|!>)#', $value, $match)) {
+			if (preg_match('#^(=|!=|<|>|>=|<=|<>|!<|!>)#', $value, $match)) {
 				$operation = $match[1];
+				if ($operation == "=") {
+					$quot = "";
+				}
 				$value = str_replace($operation, '', $value);
 			}
-			$str .= $key . $operation . '"' . ($secure ? htmlspecialchars($value) : $value) . '" ' . $separator . ' ';
+			
+			$str .= $key . $operation . $quot . ($secure ? htmlspecialchars($value) : $value) . $quot . ' ' . $separator . ' ';
 		}
 		$str = preg_replace('#' . $separator . ' $#', '', $str);
 		return $str;
