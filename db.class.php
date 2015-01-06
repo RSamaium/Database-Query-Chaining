@@ -83,7 +83,7 @@ class DB extends PDO {
 			$this->host = $host;
 		}	 
 		catch(Exception $e) {
-				
+				throw $e;
 		}
 	}
 	
@@ -619,16 +619,28 @@ class DB_Element extends DB_Exec {
 		$values_exist = isset($this->chain[self::$INDEX['VALUES'] . '-VALUES']);
 		if ($values_exist && !self::is_assoc($insert)) {
 			for ($i=0 ; $i < count($insert) ; $i++) {
-				$str_value .= '"' . ($options['secure'] ? htmlspecialchars($insert[$i]) : $insert[$i]) . '", ';
+				if(empty($insert[$i]) && $insert[$i] !== 0 && $insert[$i] !== "0") {
+					$str_value .= 'NULL, ';
+				} else {
+					$str_value .= $this->db->quote($options['secure'] ? htmlspecialchars($insert[$i]) : $insert[$i]) . ', ';
+				}
 			}
 		}
 		elseif ($values_exist && is_string($insert)) {
-				$str_value = '"' . ($options['secure'] ? htmlspecialchars($insert) : $insert) . '"';
+				if(empty($str_value) && $str_value !== 0 && $str_value !== "0") {
+					$str_value = 'NULL';
+				} else {
+					$str_value = $this->db->quote($options['secure'] ? htmlspecialchars($insert) : $insert);
+				}
 		}
 		else {
 			foreach ($insert as $key => $value) {
 				$str_key .= '`' . $key . '`, ';
-				$str_value .= '"' . ($options['secure'] ? htmlspecialchars($value) : $value) . '", ';
+				if(!isset($value) && $value !== 0 && $value !== "0") {
+					$str_value .= 'NULL, ';
+				} else {
+					$str_value .= $this->db->quote($options['secure'] ? htmlspecialchars($value) : $value) . ', ';
+				}
 			}
 			$str_key = '(' . preg_replace('#, $#', '', $str_key) . ')';
 		}
@@ -684,7 +696,11 @@ class DB_Element extends DB_Exec {
 	}
 	
 	private function addElement($type, $str) {
-		$index = self::$INDEX[$type];
+		if(isset(self::$INDEX[$type])) {
+			$index = self::$INDEX[$type];
+		} else {
+			$index = NULL;
+		}
 		if (!isset($index)) {
 			if (isset(self::$INDEX["~" . $type])) {
 				$index = self::$INDEX["~" . $type];
@@ -694,7 +710,11 @@ class DB_Element extends DB_Exec {
 		else {
 			$el_name = $index . '-' . $type;
 		}
-		$value = $this->chain[$el_name];
+		if(isset($this->chain[$el_name])) {
+			$value = $this->chain[$el_name];
+		} else {
+			$value = NULL;
+		}
 		if (isset($value)) {
 			switch($type) {
 				case "WHERE":
@@ -728,17 +748,18 @@ class DB_Element extends DB_Exec {
 	private function strConstruct($params, $secure = false, $separator = "AND") {
 		$str = '';
 		$operation = '=';
-		$quot = "'";
+		$quote = true;
 		foreach ($params as $key => $value) {
 			if (preg_match('#^(=|!=|<|>|>=|<=|<>|!<|!>)#', $value, $match)) {
 				$operation = $match[1];
-				if ($operation == "=") {
-					$quot = "";
-				}
+				$quote = false;
 				$value = str_replace($operation, '', $value);
 			}
-			
-			$str .= $key . $operation . $quot . ($secure ? htmlspecialchars($value) : $value) . $quot . ' ' . $separator . ' ';
+			if(empty($value) && $value !== 0 && $value !== '0') { 
+				$str .= $key . $operation . ' NULL ' . $separator . ' ';
+			} else {
+				$str .= $key . $operation . ($quote ? $this->db->quote($secure ? htmlspecialchars($value) : $value) : $value) . ' ' . $separator . ' ';
+			}
 		}
 		$str = preg_replace('#' . $separator . ' $#', '', $str);
 		return $str;
